@@ -9,7 +9,7 @@ class Habitdetails(Resource):
         habit = Habitlog.query.get(habit_id)
         return habit
     def post(self):
-        parser = reqparse.RequestParser()
+        parser = reqparse.RequestParser()   
         parser.add_argument('habit_id', required=True)
         parser.add_argument('date', required=True)
         parser.add_argument('status', required=True)
