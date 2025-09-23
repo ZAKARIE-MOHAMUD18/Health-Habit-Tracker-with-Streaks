@@ -22,7 +22,7 @@ with app.app_context():
         ]
         db.session.add_all(users)
         db.session.commit()
-        print("✅ Users seeded:", User.query.count())
+        print("Users seeded:", User.query.count())
 
         # --- HABITS ---
         habits = []
@@ -39,7 +39,7 @@ with app.app_context():
                 )
         db.session.add_all(habits)
         db.session.commit()
-        print("✅ Habits seeded:", Habit.query.count())
+        print("Habits seeded:", Habit.query.count())
 
         # --- HABIT LOGS ---
         habitlogs = []
@@ -55,7 +55,7 @@ with app.app_context():
                 )
         db.session.add_all(habitlogs)
         db.session.commit()
-        print("✅ HabitLogs seeded:", HabitLog.query.count())
+        print("HabitLogs seeded:", HabitLog.query.count())
 
         # --- CHALLENGES ---
         challenges = [
@@ -69,7 +69,7 @@ with app.app_context():
         ]
         db.session.add_all(challenges)
         db.session.commit()
-        print("✅ Challenges seeded:", Challenge.query.count())
+        print("Challenges seeded:", Challenge.query.count())
 
         # --- USER CHALLENGES ---
         userchallenges = []
@@ -85,8 +85,8 @@ with app.app_context():
             )
         db.session.add_all(userchallenges)
         db.session.commit()
-        print("✅ UserChallenges seeded:", UserChallenge.query.count())
+        print("UserChallenges seeded:", UserChallenge.query.count())
 
     except Exception as e:
         db.session.rollback()
-        print("❌ Seeding failed:", e)
+        print("Seeding failed:", e)
