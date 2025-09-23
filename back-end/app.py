@@ -3,7 +3,7 @@ from models import db, User, Habit, HabitLog, Challenge, UserChallenge
 from flask_migrate import Migrate
 from flask_restful import Resource, Api, reqparse
 from werkzeug.security import generate_password_hash
-from datetime import datetime, date  
+from datetime import datetime, date
 
 app = Flask(__name__)
 
@@ -13,6 +13,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 migrate = Migrate(app, db)
 api = Api(app)
+
 
 # -------------------
 # User Resource
@@ -42,6 +43,7 @@ class UserList(Resource):
 
         return new_user.to_dict(rules=("-habits", "-user_challenges", "-password_hash")), 201
 
+
 # -------------------
 # Habit Resource
 # -------------------
@@ -52,11 +54,11 @@ class HabitList(Resource):
 
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument("user_id", type=int, required=True, help="user_id is required")
-        parser.add_argument("title", type=str, required=True, help="title is required")
+        parser.add_argument("user_id", type=int, required=True)
+        parser.add_argument("title", type=str, required=True)
         parser.add_argument("description", type=str)
-        parser.add_argument("frequency", type=str, required=True, help="frequency is required")
-        parser.add_argument("start_date", type=str, required=False)
+        parser.add_argument("frequency", type=str, required=True)
+        parser.add_argument("start_date", type=str)
         args = parser.parse_args()
 
         if args["frequency"] not in ["daily", "weekly"]:
@@ -66,18 +68,15 @@ class HabitList(Resource):
         if not user:
             return {"error": "User not found"}, 404
 
-        if args["start_date"]:
-            try:
-                start_date = datetime.strptime(args["start_date"], "%Y-%m-%d").date()
-            except ValueError:
-                return {"error": "start_date must be in YYYY-MM-DD format"}, 400
-        else:
-            start_date = date.today()
+        try:
+            start_date = datetime.strptime(args["start_date"], "%Y-%m-%d").date() if args["start_date"] else date.today()
+        except ValueError:
+            return {"error": "start_date must be YYYY-MM-DD"}, 400
 
         habit = Habit(
             user_id=args["user_id"],
             title=args["title"],
-            description=args["description"],
+            description=args.get("description"),
             frequency=args["frequency"],
             start_date=start_date,
         )
@@ -87,89 +86,146 @@ class HabitList(Resource):
 
         return habit.to_dict(), 201
 
+
+class HabitDetails(Resource):
+    def get(self, habit_id):
+        habit = Habit.query.get(habit_id)
+        if not habit:
+            return {"error": "Habit not found"}, 404
+        return habit.to_dict(rules=("-user",)), 200
+
+
 # -------------------
 # HabitLog Resource
 # -------------------
-class HabitDetails(Resource):
-    def get(self, habit_id):
-        habit = HabitLog.query.get(habit_id)
-        return habit.to_dict() if habit else {"error": "Habit not found"}, 404
-
+class HabitLogList(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('habit_id', required=True, type=int)
-        parser.add_argument('date', required=True)
-        parser.add_argument('status', required=True)
-        parser.add_argument('note')
+        parser.add_argument("habit_id", type=int, required=True)
+        parser.add_argument("date", type=str, required=True)
+        parser.add_argument("status", type=bool, required=True)
+        parser.add_argument("note")
         args = parser.parse_args()
 
-        new_habit = HabitLog(
-            habit_id=args['habit_id'],
-            date=args['date'],
-            status=args['status'],
-            note=args.get('note')
+        habit = Habit.query.get(args["habit_id"])
+        if not habit:
+            return {"error": "Habit not found"}, 404
+
+        try:
+            log_date = datetime.strptime(args["date"], "%Y-%m-%d").date()
+        except ValueError:
+            return {"error": "date must be YYYY-MM-DD"}, 400
+
+        new_log = HabitLog(
+            habit_id=args["habit_id"],
+            date=log_date,
+            status=args["status"],  # now Boolean in model
+            note=args.get("note")
         )
-        db.session.add(new_habit)
+        db.session.add(new_log)
         db.session.commit()
-        return new_habit.to_dict(), 201
+        return new_log.to_dict(), 201
+
+
+class HabitLogDetails(Resource):
+    def get(self, log_id):
+        log = HabitLog.query.get(log_id)
+        if not log:
+            return {"error": "Log not found"}, 404
+        return log.to_dict(), 200
+
 
 # -------------------
 # Challenge Resource
 # -------------------
-class ChallengeDetails(Resource):
-    def get(self, challenge_id):
-        challenge = Challenge.query.get(challenge_id)
-        return challenge.to_dict() if challenge else {"error": "Challenge not found"}, 404
+class ChallengeList(Resource):
+    def get(self):
+        challenges = Challenge.query.all()
+        return [c.to_dict() for c in challenges], 200
 
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('title', required=True)
-        parser.add_argument('description')
-        parser.add_argument('start_date', required=True)
-        parser.add_argument('end_date', required=True)
+        parser.add_argument("title", required=True)
+        parser.add_argument("description")
+        parser.add_argument("start_date", required=True)
+        parser.add_argument("end_date", required=True)
         args = parser.parse_args()
 
+        try:
+            start_date = datetime.strptime(args["start_date"], "%Y-%m-%d").date()
+            end_date = datetime.strptime(args["end_date"], "%Y-%m-%d").date()
+        except ValueError:
+            return {"error": "dates must be YYYY-MM-DD"}, 400
+
         new_challenge = Challenge(
-            title=args['title'],
-            description=args.get('description'),
-            start_date=args['start_date'],
-            end_date=args['end_date']
+            title=args["title"],
+            description=args.get("description"),
+            start_date=start_date,
+            end_date=end_date
         )
         db.session.add(new_challenge)
         db.session.commit()
         return new_challenge.to_dict(), 201
 
+
+class ChallengeDetails(Resource):
+    def get(self, challenge_id):
+        challenge = Challenge.query.get(challenge_id)
+        if not challenge:
+            return {"error": "Challenge not found"}, 404
+        return challenge.to_dict(), 200
+
+
 # -------------------
 # UserChallenge Resource
 # -------------------
-class UserChallengeDetails(Resource):
-    def get(self, user_challenge_id):
-        user_challenge = UserChallenge.query.get(user_challenge_id)
-        return user_challenge.to_dict() if user_challenge else {"error": "Not found"}, 404
-
+class UserChallengeList(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('user_id', required=True, type=int)
-        parser.add_argument('challenge_id', required=True, type=int)
-        parser.add_argument('join_date', required=True)
-        parser.add_argument('status', required=True)
+        parser.add_argument("user_id", type=int, required=True)
+        parser.add_argument("challenge_id", type=int, required=True)
+        parser.add_argument("status", type=str, required=True)  # match model
+        parser.add_argument("join_date", type=str)
         args = parser.parse_args()
 
-        new_user_challenge = UserChallenge(
-            user_id=args['user_id'],
-            challenge_id=args['challenge_id'],
-            join_date=args['join_date'],
-            status=args['status']
+        user = User.query.get(args["user_id"])
+        challenge = Challenge.query.get(args["challenge_id"])
+        if not user or not challenge:
+            return {"error": "User or Challenge not found"}, 404
+
+        try:
+            join_date = datetime.strptime(args["join_date"], "%Y-%m-%d").date() if args["join_date"] else date.today()
+        except ValueError:
+            return {"error": "join_date must be YYYY-MM-DD"}, 400
+
+        new_uc = UserChallenge(
+            user_id=args["user_id"],
+            challenge_id=args["challenge_id"],
+            join_date=join_date,
+            status=args["status"]
         )
-        db.session.add(new_user_challenge)
+        db.session.add(new_uc)
         db.session.commit()
-        return new_user_challenge.to_dict(), 201
+        return new_uc.to_dict(), 201
+
+
+class UserChallengeDetails(Resource):
+    def get(self, user_challenge_id):
+        uc = UserChallenge.query.get(user_challenge_id)
+        if not uc:
+            return {"error": "Not found"}, 404
+        return uc.to_dict(), 200
+
 
 # -------------------
 # Routes
 # -------------------
 api.add_resource(UserList, "/users")
 api.add_resource(HabitList, "/habits")
-api.add_resource(HabitDetails, "/habitdetails", "/habitdetails/<int:habit_id>")
-api.add_resource(ChallengeDetails, "/challengedetails", "/challengedetails/<int:challenge_id>")
-api.add_resource(UserChallengeDetails, "/userchallengedetails", "/userchallengedetails/<int:user_challenge_id>")
+api.add_resource(HabitDetails, "/habits/<int:habit_id>")
+api.add_resource(HabitLogList, "/habitlogs")
+api.add_resource(HabitLogDetails, "/habitlogs/<int:log_id>")
+api.add_resource(ChallengeList, "/challenges")
+api.add_resource(ChallengeDetails, "/challenges/<int:challenge_id>")
+api.add_resource(UserChallengeList, "/userchallenges")
+api.add_resource(UserChallengeDetails, "/userchallenges/<int:user_challenge_id>")
