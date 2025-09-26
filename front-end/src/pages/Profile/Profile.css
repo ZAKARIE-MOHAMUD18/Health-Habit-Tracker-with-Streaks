@@ -1,0 +1,59 @@
+.profile-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1rem;
+  color: #333;
+}
+
+.profile-container h1 {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+}
+
+.profile-info {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.profile-info p {
+  margin: 0.3rem 0;
+  font-size: 0.95rem;
+}
+
+/* Section Titles */
+.profile-container h2 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Shared styles */
+.habit-list,
+.challenge-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.habit-card,
+.challenge-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.habit-card strong,
+.challenge-card strong {
+  font-size: 1rem;
+  color: #111827;
+}
+
+.no-habits,
+.no-challenges {
+  color: #6b7280;
+  font-style: italic;
+}

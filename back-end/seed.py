@@ -65,7 +65,7 @@ with app.app_context():
                 start_date=date.today(),
                 end_date=date.today() + timedelta(days=30),
             )
-            for _ in range(3)
+            for _ in range(10)
         ]
         db.session.add_all(challenges)
         db.session.commit()
