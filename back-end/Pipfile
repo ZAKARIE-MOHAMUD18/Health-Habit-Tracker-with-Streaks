@@ -7,10 +7,10 @@ name = "pypi"
 flask = "*"
 flask-sqlalchemy = "*"
 sqlalchemy-serializer = "*"
-flask-migrate = "*"
 flask-restful = "*"
 flask-cors = "*"
 faker = "*"
+flask-migrate = "*"
 
 [dev-packages]
 
