@@ -9,7 +9,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Config
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///habit_tracker.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///habit-tracker.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -121,7 +121,11 @@ def create_habit():
 
 @app.route("/habits", methods=["GET"])
 def list_habits():
-    habits = Habit.query.all()
+    user_id = request.args.get("user_id", type=int)  # get user_id from query
+    if user_id:
+        habits = Habit.query.filter_by(user_id=user_id).all()
+    else:
+        habits = Habit.query.all()
     return jsonify([h.to_dict() for h in habits]), 200
 
 @app.route("/habits/<int:id>", methods=["PATCH"])
